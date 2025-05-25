@@ -164,4 +164,4 @@ This is just the beginning. We're building something that could change how milli
 
 ---
 
-*"The best time to plant a tree was 20 years ago. The second best time is now. The third best time is with VibeStack."* 🌱
+*"The best time to develop a habit was 30 days ago. The second best time is now...with VibeStack."* 🌱
