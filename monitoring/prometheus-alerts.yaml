@@ -1,0 +1,159 @@
+# monitoring/prometheus-alerts.yaml
+# Description: Example Prometheus alerting rules.
+# These rules should be loaded into Prometheus, typically via its configuration.
+
+groups:
+- name: vibestack-application-alerts
+  rules:
+  - alert: HighRequestLatency
+    expr: histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{job="vibestack-app"}[5m])) by (le, job)) > 1
+    for: 5m
+    labels:
+      severity: page # or 'warning'
+    annotations:
+      summary: High request latency on {{ $labels.job }}
+      description: "The 99th percentile of request latency is above 1s for more than 5 minutes on job {{ $labels.job }}."
+
+  - alert: HighErrorRate
+    # Example: Alert if HTTP 5xx errors are more than 5% of requests over 5 minutes
+    expr: (sum(rate(http_requests_total{job="vibestack-app", code=~"5.."}[5m])) by (job) / sum(rate(http_requests_total{job="vibestack-app"}[5m])) by (job)) * 100 > 5
+    for: 5m
+    labels:
+      severity: critical # or 'warning'
+    annotations:
+      summary: High HTTP 5xx error rate on {{ $labels.job }}
+      description: "More than 5% of requests to {{ $labels.job }} are returning 5xx errors over the last 5 minutes."
+
+  - alert: InstanceDown
+    expr: up{job="vibestack-app"} == 0
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: Instance {{ $labels.instance }} down
+      description: "Instance {{ $labels.instance }} of job {{ $labels.job }} has been down for more than 5 minutes."
+
+  - alert: HighCpuUsage
+    expr: sum(rate(container_cpu_usage_seconds_total{job="vibestack-app", image!=""}[5m])) by (pod, namespace) / sum(kube_pod_container_resource_limits_cpu_cores{job="vibestack-app", pod!=""}) by (pod, namespace) * 100 > 80
+    for: 10m
+    labels:
+      severity: warning
+    annotations:
+      summary: High CPU usage on pod {{ $labels.pod }} in {{ $labels.namespace }}
+      description: "CPU usage is above 80% for more than 10 minutes on pod {{ $labels.pod }} in namespace {{ $labels.namespace }}."
+
+  - alert: HighMemoryUsage
+    expr: sum(container_memory_working_set_bytes{job="vibestack-app", image!=""}) by (pod, namespace) / sum(kube_pod_container_resource_limits_memory_bytes{job="vibestack-app", pod!=""}) by (pod, namespace) * 100 > 80
+    for: 10m
+    labels:
+      severity: warning
+    annotations:
+      summary: High Memory usage on pod {{ $labels.pod }} in {{ $labels.namespace }}
+      description: "Memory usage is above 80% for more than 10 minutes on pod {{ $labels.pod }} in namespace {{ $labels.namespace }}."
+
+  # Add more specific alerts based on your application's metrics and SLOs.
+  # For example, queue depth, specific business metrics.
+
+- name: vibestack-security-alerts
+  rules:
+  - alert: HighAuthenticationFailureRate
+    # This is an example, actual metric name will depend on your auth system instrumentation
+    expr: sum(rate(auth_login_failures_total{job="vibestack-app"}[5m])) by (job) > 10
+    for: 5m
+    labels:
+      severity: critical # Potential breach attempt
+    annotations:
+      summary: High authentication failure rate for {{ $labels.job }}
+      description: "More than 10 authentication failures per minute detected for {{ $labels.job }}."
+
+  - alert: PotentialDataCorruptionDetected # Placeholder
+    # expr: your_data_corruption_metric > 0 # Replace with actual metric
+    expr: vector(0) # Replace with actual metric expression
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: Potential data corruption detected
+      description: "A metric indicating potential data corruption has been triggered. IMMEDIATE INVESTIGATION REQUIRED."
+
+- name: vibestack-deployment-tracking-alerts
+  rules:
+  - alert: DeploymentFailed
+    # This metric should be emitted by your CI/CD pipeline or deployment controller
+    expr: deployment_status{job="vibestack-app", status="failed"} == 1
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      summary: Deployment failed for {{ $labels.job }} version {{ $labels.version }}
+      description: "The deployment of version {{ $labels.version }} for job {{ $labels.job }} has failed."
+
+  - alert: RollbackTriggered
+    # This metric should be emitted upon a rollback action
+    expr: deployment_rollback_triggered{job="vibestack-app"} == 1
+    for: 1m
+    labels:
+      severity: warning # Could be info if rollbacks are common and automated for minor issues
+    annotations:
+      summary: Rollback triggered for {{ $labels.job }}
+      description: "A rollback has been triggered for job {{ $labels.job }} to version {{ $labels.previous_version }} from {{ $labels.current_version }}."
+
+  - alert: SuccessfulDeployment # Info level
+    expr: deployment_status{job="vibestack-app", status="success"} == 1
+    for: 1m # Short duration, as it's an informational event
+    labels:
+      severity: info # Using 'info' as per request, though Alertmanager handles severities
+    annotations:
+      summary: Successful deployment for {{ $labels.job }} version {{ $labels.version }}
+      description: "Version {{ $labels.version }} for job {{ $labels.job }} deployed successfully."
+
+- name: vibestack-business-metrics-alerts # Placeholder examples
+  rules:
+  - alert: LowOrderRate # Example KPI
+    # expr: rate(orders_processed_total{job="vibestack-app"}[1h]) < 100 # Replace with actual metric
+    expr: vector(0) # Replace with actual metric expression
+    for: 30m
+    labels:
+      severity: warning
+    annotations:
+      summary: Low order rate for {{ $labels.job }}
+      description: "The order processing rate for {{ $labels.job }} has fallen below 100 per hour."
+
+  - alert: HighUserChurnRate # Example User Experience Metric
+    # expr: rate(user_churn_events_total{job="vibestack-app"}[24h]) > 50 # Replace with actual metric
+    expr: vector(0) # Replace with actual metric expression
+    for: 24h
+    labels:
+      severity: warning
+    annotations:
+      summary: High user churn rate for {{ $labels.job }}
+      description: "User churn rate for {{ $labels.job }} is higher than expected over the last 24 hours."
+
+- name: kubernetes-system-alerts
+  rules:
+  - alert: KubeNodeNotReady
+    expr: kube_node_status_condition{condition="Ready",status="true"} == 0
+    for: 10m
+    labels:
+      severity: critical
+    annotations:
+      summary: Kubernetes node {{ $labels.node }} is not ready
+      description: "Node {{ $labels.node }} has been in a NotReady state for over 10 minutes."
+
+  - alert: KubePodCrashLooping
+    expr: increase(kube_pod_container_status_restarts_total[1h]) > 5
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: Kubernetes pod {{ $labels.namespace }}/{{ $labels.pod }} is crash looping
+      description: "Pod {{ $labels.namespace }}/{{ $labels.pod }} has restarted more than 5 times in the last hour."
+
+# To integrate these rules with Prometheus:
+# 1. Ensure this file is accessible by the Prometheus server.
+# 2. Update prometheus.yml to include this rule file:
+#    rule_files:
+#      - "/etc/prometheus/alert.rules.yml" # or whatever path you use
+#      - "/path/to/your/prometheus-alerts.yaml"
+# 3. Reload Prometheus configuration (e.g., send SIGHUP or restart).
+# 4. Configure Alertmanager to receive alerts from Prometheus and route them.

@@ -1,0 +1,70 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: vibestack-app-network-policy
+  # Ensure this policy is created in the same namespace as your application
+  # namespace: your-application-namespace # Replace if not default
+spec:
+  podSelector:
+    matchLabels:
+      app: vibestack-app
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow traffic from Ingress controller (e.g., nginx-ingress)
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          # Adjust this label to match your Ingress controller's namespace
+          kubernetes.io/metadata.name: ingress-nginx
+      podSelector:
+        matchLabels:
+          # Adjust this label to match your Ingress controller pods
+          app.kubernetes.io/name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 3000
+  # Allow traffic from other pods within the same application (if needed for microservices)
+  - from:
+    - podSelector:
+        matchLabels:
+          app: vibestack-app
+    ports:
+    - protocol: TCP
+      port: 3000
+  # Allow traffic from Prometheus in the monitoring namespace
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          # Adjust this label if your monitoring namespace has a different label
+          kubernetes.io/metadata.name: monitoring # Or your specific monitoring namespace label
+      podSelector:
+        matchLabels:
+          # Adjust this label to match your Prometheus pods
+          app.kubernetes.io/name: prometheus
+    ports:
+    - protocol: TCP
+      port: 3000 # Assuming Prometheus scrapes on the application port
+  egress:
+  # Allow DNS resolution
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  # Add other specific egress rules as needed by your application
+  # For example, to an external database or API:
+  # - to:
+  #   - ipBlock:
+  #       cidr: 1.2.3.4/32 # Replace with actual external IP
+  #   ports:
+  #   - protocol: TCP
+  #     port: 5432 # Replace with actual external port

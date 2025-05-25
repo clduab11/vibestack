@@ -1,0 +1,145 @@
+{
+  "__inputs": [],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "7.0.0"
+    },
+    {
+      "type": "datasource",
+      "id": "prometheus",
+      "name": "Prometheus",
+      "version": "1.0.0"
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "title": "Deployment Frequency (Placeholder)",
+      "type": "stat",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "count_over_time(deployment_status{job=\"vibestack-app\", status=\"success\"}[7d])",
+          "legendFormat": "Deployments Last 7 Days"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 0 },
+      "id": 2,
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "auto"
+      }
+    },
+    {
+      "title": "Deployment Success Rate (Placeholder)",
+      "type": "gauge",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "(sum(rate(deployment_status{job=\"vibestack-app\", status=\"success\"}[24h])) / (sum(rate(deployment_status{job=\"vibestack-app\", status=\"success\"}[24h])) + sum(rate(deployment_status{job=\"vibestack-app\", status=\"failed\"}[24h])))) * 100",
+          "legendFormat": "Success Rate (24h)"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 6, "x": 6, "y": 0 },
+      "id": 3,
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "orange", "value": 80 },
+              { "color": "green", "value": 95 }
+            ]
+          },
+          "mappings": [],
+          "color": { "mode": "thresholds" }
+        }
+      }
+    },
+    {
+      "title": "Average Build Duration (Placeholder)",
+      "type": "graph",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "avg_over_time(build_duration_seconds{job=\"vibestack-ci\"}[1d])",
+          "legendFormat": "Avg Build Time (s)"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "id": 4
+    },
+    {
+      "title": "Recent Deployments (Placeholder - Table)",
+      "type": "table",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "deployment_info{job=\"vibestack-app\"}",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 8 },
+      "id": 5,
+      "options": {},
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      }
+    }
+  ],
+  "refresh": "5m",
+  "schemaVersion": 27,
+  "style": "dark",
+  "tags": ["development", "ci-cd", "pipeline"],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Development Dashboard - Deployment Pipeline",
+  "uid": "development-pipeline-dashboard",
+  "version": 1
+}

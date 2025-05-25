@@ -1,0 +1,121 @@
+{
+  "__inputs": [],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "7.0.0"
+    },
+    {
+      "type": "datasource",
+      "id": "prometheus",
+      "name": "Prometheus",
+      "version": "1.0.0"
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "title": "CPU Usage (Overall)",
+      "type": "graph",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(rate(container_cpu_usage_seconds_total{job=\"vibestack-app\", image!=\"\"}[5m])) by (job) / sum(kube_pod_container_resource_limits_cpu_cores{job=\"vibestack-app\", pod!=\"\"}) by (job) * 100",
+          "legendFormat": "{{job}} CPU Usage %"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "id": 2,
+      "yaxes": [{ "format": "percentunit" }]
+    },
+    {
+      "title": "Memory Usage (Overall)",
+      "type": "graph",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(container_memory_working_set_bytes{job=\"vibestack-app\", image!=\"\"}) by (job) / sum(kube_pod_container_resource_limits_memory_bytes{job=\"vibestack-app\", pod!=\"\"}) by (job) * 100",
+          "legendFormat": "{{job}} Memory Usage %"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "id": 3,
+      "yaxes": [{ "format": "percentunit" }]
+    },
+    {
+      "title": "HTTP Request Rate",
+      "type": "graph",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total{job=\"vibestack-app\"}[5m])) by (job)",
+          "legendFormat": "{{job}} Requests/sec"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 8 },
+      "id": 4
+    },
+    {
+      "title": "HTTP Error Rate (5xx)",
+      "type": "graph",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "(sum(rate(http_requests_total{job=\"vibestack-app\", code=~\"5..\"}[5m])) by (job) / sum(rate(http_requests_total{job=\"vibestack-app\"}[5m])) by (job)) * 100",
+          "legendFormat": "{{job}} 5xx Error %"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 8 },
+      "id": 5,
+      "yaxes": [{ "format": "percentunit" }]
+    },
+    {
+      "title": "Request Latency (99th Percentile)",
+      "type": "graph",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{job=\"vibestack-app\"}[5m])) by (le, job))",
+          "legendFormat": "{{job}} p99 Latency (s)"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 8 },
+      "id": 6
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 27,
+  "style": "dark",
+  "tags": ["operations", "system-health"],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Operations Dashboard - System Health",
+  "uid": "operations-system-health",
+  "version": 1
+}

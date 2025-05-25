@@ -1,0 +1,27 @@
+# monitoring/grafana-dashboard-provider.yaml
+# Description: ConfigMap to provide Grafana dashboard configurations.
+# This tells Grafana where to find dashboard JSON files.
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards-provider # Name referenced in grafana-deployment.yaml
+  labels:
+    app: grafana
+    # Required labels for Grafana's dashboard discovery
+    grafana_dashboard: "1" 
+data:
+  # This key name (e.g., vibestack_dashboards.yaml) is arbitrary but should be a .yaml file
+  vibestack_dashboards.yaml: |-
+    apiVersion: 1
+    providers:
+    - name: 'VibeStackAppDashboards' # A logical name for this provider
+      orgId: 1 # Default organization ID
+      folder: 'VibeStack App' # Optional: Create a folder in Grafana for these dashboards
+      type: file
+      disableDeletion: false # Set to true to prevent dashboards from being deleted from Grafana if the file is removed
+      editable: true # Set to false to make dashboards read-only in Grafana UI
+      options:
+        path: /var/lib/grafana/dashboards/vibestack # Path inside the Grafana container where dashboard JSONs are mounted
+        # This path should correspond to a volumeMount in the Grafana deployment that points to another ConfigMap
+        # containing the actual dashboard JSON files.

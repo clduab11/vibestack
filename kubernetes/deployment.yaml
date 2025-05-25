@@ -1,0 +1,102 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vibestack-app-deployment
+  labels:
+    app: vibestack-app
+spec:
+  replicas: {{K8S_REPLICAS_PLACEHOLDER}} # e.g., 3
+  selector:
+    matchLabels:
+      app: vibestack-app
+  template:
+    metadata:
+      labels:
+        app: vibestack-app
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001 # Example UID, ensure this user exists in the image
+        runAsGroup: 1001 # Example GID, ensure this group exists in the image
+        fsGroup: 1001 # Example GID for filesystem access
+      containers:
+      - name: vibestack-app-container
+        image: {{DOCKER_IMAGE_PLACEHOLDER}} # e.g., your-repo/vibestack-app:latest
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+            # Add specific capabilities if needed, e.g., NET_BIND_SERVICE for binding to low ports if not running as root
+            # add:
+            #   - NET_BIND_SERVICE
+        ports:
+        - containerPort: 3000 # Assuming the app runs on port 3000
+        env:
+          - name: NODE_ENV
+            valueFrom:
+              configMapKeyRef:
+                name: vibestack-config # Name of your ConfigMap
+                key: NODE_ENV
+          - name: JWT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: vibestack-secrets # Name of your Secret
+                key: JWT_SECRET
+          - name: RATE_LIMIT_WINDOW_MS
+            valueFrom:
+              configMapKeyRef:
+                name: vibestack-config
+                key: RATE_LIMIT_WINDOW_MS
+          - name: RATE_LIMIT_MAX_REQUESTS
+            valueFrom:
+              configMapKeyRef:
+                name: vibestack-config
+                key: RATE_LIMIT_MAX_REQUESTS
+        # Liveness and Readiness Probes should be configured based on application specifics
+        livenessProbe:
+          httpGet:
+            path: /healthz # Assuming a /healthz endpoint exists
+            port: 3000
+          initialDelaySeconds: 15
+          periodSeconds: 20
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /readyz # Assuming a /readyz endpoint exists
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+
+---
+# Example ConfigMap (vibestack-config.yaml)
+# apiVersion: v1
+# kind: ConfigMap
+# metadata:
+#   name: vibestack-config
+# data:
+#   NODE_ENV: "production"
+#   RATE_LIMIT_WINDOW_MS: "60000" # Example: 1 minute
+#   RATE_LIMIT_MAX_REQUESTS: "100" # Example: 100 requests per minute
+
+---
+# Example Secret (vibestack-secrets.yaml) - Values should be base64 encoded
+# Create with: kubectl create secret generic vibestack-secrets --from-literal=JWT_SECRET='your-super-strong-random-jwt-secret'
+# apiVersion: v1
+# kind: Secret
+# metadata:
+#   name: vibestack-secrets
+# type: Opaque
+# data:
+#   JWT_SECRET: {{BASE64_ENCODED_JWT_SECRET_PLACEHOLDER}} # e.g., base64 encoded string

@@ -1,0 +1,120 @@
+# .github/workflows/deploy.yml
+# Description: GitHub Actions workflow for CI/CD of the VibeStack application.
+
+name: Deploy VibeStack Application
+
+on:
+  push:
+    branches:
+      - main # Trigger deployment on push to the main branch
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+    environment: production # Optional: Define a GitHub environment for production secrets
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18' # Specify your Node.js version
+
+      - name: Install dependencies
+        run: npm ci # Use 'npm ci' for cleaner installs in CI
+
+      - name: Security Scan - NPM Audit
+        run: npm audit --audit-level=high # Fails if high severity vulnerabilities are found
+
+      - name: Run Unit and Integration Tests
+        run: npm test # Assumes 'npm test' is configured to run all relevant tests
+        env:
+          CI: true # Often used by test runners to adjust output or behavior
+
+      - name: Validate Environment Variables
+        env:
+          NODE_ENV: ${{ secrets.NODE_ENV }} # Sourced from GitHub secrets
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          RATE_LIMIT_WINDOW_MS: ${{ secrets.RATE_LIMIT_WINDOW_MS }}
+          RATE_LIMIT_MAX_REQUESTS: ${{ secrets.RATE_LIMIT_MAX_REQUESTS }}
+        run: |
+          chmod +x ./scripts/validate_env.sh
+          ./scripts/validate_env.sh
+
+      - name: Build Docker image (Placeholder)
+        # This step would typically use docker/build-push-action@v2 or similar
+        # Requires Docker Hub credentials or other registry credentials in secrets
+        run: |
+          echo "TODO: Build Docker image"
+          echo "Example: docker build -t ${{ secrets.DOCKER_USERNAME }}/vibestack-app:${{ github.sha }} ."
+        # env:
+        #   DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        #   DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Scan Docker image with Trivy
+        uses: aquasecurity/trivy-action@0.24.0 # Use a specific version for stability
+        with:
+          image-ref: '${{ secrets.DOCKER_USERNAME }}/vibestack-app:${{ github.sha }}' # Ensure this matches the image built
+          format: 'table'
+          exit-code: '1' # Fail the build if vulnerabilities are found
+          ignore-unfixed: true # Optional: ignore vulnerabilities that don't have a fix yet
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH' # Scan for CRITICAL and HIGH severity vulnerabilities
+          # Optional: Output report to a file
+          # output: 'trivy-results.sarif'
+          # Optional: Upload Trivy report as an artifact
+          # - name: Upload Trivy scan results
+          #   uses: actions/upload-artifact@v3
+          #   if: always() # Always run this step to upload results even if previous steps fail
+          #   with:
+          #     name: trivy-scan-results
+          #     path: trivy-results.sarif
+
+      - name: Push Docker image to Registry (Placeholder)
+        # This step would push the built image
+        run: |
+          echo "TODO: Push Docker image to registry"
+          echo "Example: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}"
+          echo "Example: docker push ${{ secrets.DOCKER_USERNAME }}/vibestack-app:${{ github.sha }}"
+
+      - name: Deploy to Kubernetes (Placeholder)
+        # This step would use kubectl or a Kubernetes action like azure/k8s-deploy@v4
+        # Requires Kubernetes config in secrets
+        run: |
+          echo "TODO: Deploy to Kubernetes"
+          echo "This step would be adapted for Blue/Green:"
+          echo "1. Deploy new version to 'green' environment (e.g., update green deployment, scale up)."
+          echo "   kubectl apply -f kubernetes/deployment-green.yaml"
+          echo "   kubectl scale deployment/vibestack-app-green --replicas={{K8S_REPLICAS_PLACEHOLDER}}"
+          echo "Ensure KUBECONFIG is set up via secrets"
+        # env:
+        #   KUBECONFIG_DATA: ${{ secrets.KUBECONFIG_DATA }} # Base64 encoded kubeconfig
+
+      - name: Verify Green Deployment (Placeholder)
+        run: |
+          echo "TODO: Run health checks and smoke tests against the 'green' environment/service endpoint."
+          echo "Example: curl --fail http://vibestack-green-service/healthz"
+
+      - name: Shift Traffic to Green (Placeholder)
+        # This step depends heavily on your Ingress controller or Service Mesh
+        # Example with Kubernetes Service update (simplistic):
+        #   kubectl patch svc vibestack-app-service -p '{"spec":{"selector":{"app":"vibestack-app-green"}}}'
+        # Example with Istio/Linkerd: Update virtual service or traffic split rules
+        run: |
+          echo "TODO: Shift production traffic to the 'green' environment."
+          echo "This might involve updating Ingress rules, Service Mesh configuration, or DNS."
+
+      - name: Monitor Post-Traffic Shift (Placeholder)
+        run: |
+          echo "TODO: Monitor application health and metrics for a period after traffic shift."
+          echo "If issues arise, trigger rollback to 'blue'."
+
+      - name: Decommission Blue Environment (Optional Placeholder)
+        # Only run if green deployment is stable
+        run: |
+          echo "TODO: Optionally, scale down or delete the 'blue' environment after successful switch."
+          echo "Example: kubectl scale deployment/vibestack-app-blue --replicas=0"

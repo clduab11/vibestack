@@ -1,0 +1,153 @@
+# monitoring/fluentd-daemonset.yaml
+# Description: Basic Kubernetes DaemonSet for Fluentd log collection.
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: fluentd
+  namespace: kube-system # Recommended to run Fluentd in kube-system
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: fluentd
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - namespaces
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - nodes/proxy # Required for Kubelet API access for logs if needed
+  verbs:
+  - get
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: fluentd
+roleRef:
+  kind: ClusterRole
+  name: fluentd
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+- kind: ServiceAccount
+  name: fluentd
+  namespace: kube-system
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluentd-config
+  namespace: kube-system
+  labels:
+    app: fluentd
+data:
+  fluent.conf: |
+    # Input: Tail logs from all containers on the node
+    <source>
+      @type tail
+      path /var/log/containers/*.log
+      pos_file /var/log/fluentd-containers.log.pos
+      tag kubernetes.*
+      read_from_head true
+      <parse>
+        @type cri # Container Runtime Interface (CRI) log format (used by Docker, containerd)
+      </parse>
+    </source>
+
+    # Filter: Add Kubernetes metadata to logs
+    <filter kubernetes.**>
+      @type kubernetes_metadata
+    </filter>
+
+    # Output: Placeholder - forward to stdout for now (replace with your SIEM/log store)
+    <match **>
+      @type stdout
+      # Example: Forward to Elasticsearch
+      # @type elasticsearch
+      # host your-elasticsearch-host
+      # port 9200
+      # logstash_format true
+      # logstash_prefix fluentd
+      # type_name fluentd
+      # include_tag_key true
+      # tag_key @log_name
+      # flush_interval 5s
+
+      # Example: Forward to a SIEM via HTTP/Syslog
+      # @type http
+      # endpoint https://your-siem-endpoint/logs
+      # <headers>
+      #   Authorization Bearer {{YOUR_SIEM_TOKEN_PLACEHOLDER}}
+      # </headers>
+      # Or
+      # @type syslog
+      # remote_syslog your-syslog-server:514
+      # facility local0
+      # severity debug
+    </match>
+
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: fluentd
+  namespace: kube-system
+  labels:
+    app: fluentd
+spec:
+  selector:
+    matchLabels:
+      app: fluentd
+  template:
+    metadata:
+      labels:
+        app: fluentd
+    spec:
+      serviceAccountName: fluentd
+      tolerations: # Allow scheduling on all nodes, including masters if necessary
+      - key: node-role.kubernetes.io/master
+        effect: NoSchedule
+      - key: node-role.kubernetes.io/control-plane # For newer Kubernetes versions
+        effect: NoSchedule
+      containers:
+      - name: fluentd
+        image: fluent/fluentd-kubernetes-daemonset:v1.16-debian-elasticsearch7-1 # Choose an image with plugins you need
+        env:
+          - name: FLUENTD_CONF
+            value: "fluent.conf"
+        resources:
+          limits:
+            memory: "512Mi"
+          requests:
+            cpu: "100m"
+            memory: "200Mi"
+        volumeMounts:
+        - name: varlog
+          mountPath: /var/log
+        - name: varlibdockercontainers
+          mountPath: /var/lib/docker/containers # Path for Docker logs
+          readOnly: true
+        - name: fluentd-config
+          mountPath: /fluentd/etc/
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: varlog
+        hostPath:
+          path: /var/log
+      - name: varlibdockercontainers
+        hostPath:
+          path: /var/lib/docker/containers # Adjust if your container runtime log path differs
+      - name: fluentd-config
+        configMap:
+          name: fluentd-config

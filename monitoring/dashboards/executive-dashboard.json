@@ -1,0 +1,84 @@
+{
+  "__inputs": [],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "7.0.0"
+    },
+    {
+      "type": "datasource",
+      "id": "prometheus",
+      "name": "Prometheus",
+      "version": "1.0.0"
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "title": "Key Business Metric 1 (Placeholder)",
+      "type": "singlestat",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "vector(100) # Replace with actual business metric query",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": ""
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "id": 2,
+      "valueName": "current"
+    },
+    {
+      "title": "Key Business Metric 2 (Placeholder)",
+      "type": "graph",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "vector(0) # Replace with actual business metric query over time",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": ""
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "id": 3
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 27,
+  "style": "dark",
+  "tags": ["executive", "business-metrics"],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Executive Dashboard - Business Metrics",
+  "uid": "executive-biz-metrics",
+  "version": 1
+}
