@@ -298,7 +298,7 @@ expo start
 ### **For Investors & Partners**
 
 Interested in the future of AI-powered habit formation? Contact us:
-- **Email**: partnerships@parallaxanalytics.com
+- **Email**: info@parallax-ai.app
 - **LinkedIn**: [Parallax Analytics](https://linkedin.com/company/parallax-analytics)
 
 ---
