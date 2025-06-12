@@ -1,0 +1,54 @@
+{
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": 2022,
+    "sourceType": "module",
+    "project": "./tsconfig.json"
+  },
+  "plugins": [
+    "@typescript-eslint",
+    "jest",
+    "prettier"
+  ],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/recommended-requiring-type-checking",
+    "plugin:jest/recommended",
+    "plugin:prettier/recommended"
+  ],
+  "env": {
+    "node": true,
+    "jest": true,
+    "es2022": true
+  },
+  "rules": {
+    "@typescript-eslint/explicit-function-return-type": "error",
+    "@typescript-eslint/no-explicit-any": "error",
+    "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+    "@typescript-eslint/strict-boolean-expressions": "error",
+    "@typescript-eslint/no-floating-promises": "error",
+    "@typescript-eslint/no-misused-promises": "error",
+    "@typescript-eslint/await-thenable": "error",
+    "@typescript-eslint/no-unnecessary-type-assertion": "error",
+    "@typescript-eslint/prefer-nullish-coalescing": "error",
+    "@typescript-eslint/prefer-optional-chain": "error",
+    "no-console": ["warn", { "allow": ["warn", "error"] }],
+    "prefer-const": "error",
+    "no-var": "error",
+    "eqeqeq": ["error", "always"],
+    "curly": ["error", "all"],
+    "jest/expect-expect": "error",
+    "jest/no-disabled-tests": "error",
+    "jest/no-focused-tests": "error",
+    "jest/no-identical-title": "error",
+    "jest/valid-expect": "error"
+  },
+  "ignorePatterns": [
+    "dist/",
+    "coverage/",
+    "node_modules/",
+    "*.js"
+  ]
+}

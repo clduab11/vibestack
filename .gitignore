@@ -1,7 +1,53 @@
 # Ignore environment variable files containing secrets
 .env
+.env.local
+.env.production
+.env.development
+.env.test
+.env.*
 
 # Node.js dependencies and build artifacts
 node_modules/
 dist/
 coverage/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+coverage/
+.nyc_output/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Claude-specific files
+*claude.md
+claude-*.sh
+sparc-*.md
+optional-coordination-system.md
+
+# Build artifacts
+build/
+out/
+.next/
+.expo/
+
+# Development tools
+.roo/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
