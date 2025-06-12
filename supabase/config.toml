@@ -1,0 +1,72 @@
+# Supabase Local Development Configuration
+# Version 1.0.0
+
+[project]
+id = "brckrdumqblxnsyzduig"
+name = "vibestack"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[studio]
+enabled = true
+port = 54323
+api_url = "http://localhost:54321"
+
+[auth]
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["http://localhost:3000/auth/callback"]
+jwt_expiry = 3600
+enable_signup = true
+email_confirm = true
+email_change_confirm = true
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = true
+
+[auth.sms]
+enable_signup = false
+enable_confirmations = false
+
+[auth.external.apple]
+enabled = true
+client_id = ""
+secret = ""
+
+[auth.external.google]
+enabled = true
+client_id = ""
+secret = ""
+redirect_uri = ""
+
+[storage]
+file_size_limit = "50MiB"
+
+[emails]
+enable = true
+smtp_host = "localhost"
+smtp_port = 54325
+smtp_user = ""
+smtp_pass = ""
+smtp_admin_email = "admin@vibestack.app"
+smtp_max_frequency = "1h"
+
+[inbucket]
+enabled = true
+port = 54324
+
+[functions]
+node_version = "18"
+
+[analytics]
+enabled = true
+port = 54327
